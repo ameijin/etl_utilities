@@ -19,6 +19,7 @@
 
 ## Overview
 
+This package is a fork of `etl-utilities` by [@magicjedi90]. Maintained by Eiji.
 This project provides a comprehensive Data ETL \(Extract, Transform, Load\) and data manipulation framework using Python. It integrates with databases using SQLAlchemy and provides tools for data parsing, cleaning, loading, validating, and more. The project is structured with classes that encapsulate different functionalities.
 
 ## Classes

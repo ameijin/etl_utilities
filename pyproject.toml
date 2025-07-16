@@ -3,15 +3,15 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "etl_utilities"
+name = "etl-utilities-ameijin"
 dynamic = ["version"]
-description = 'This repository provides a collection of utility functions and classes for data cleaning, SQL query generation, and data analysis. The code is written in Python and uses libraries such as `pandas`, `numpy`, and `dateutil`.'
+description = 'This repository is forked from etl-utilities.'
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 keywords = ["etl", "pandas", "cleaning", "etl-utilities", "utilities", "database", "dataframe"]
 authors = [
-    { name = "Jesse", email = "magicjedi90@aim.com" },
+    { name = "Eiji", email = "eiji@eidosoft.co" },
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -28,9 +28,9 @@ classifiers = [
 dependencies = ["numpy", "pandas", "python_dateutil", "SQLAlchemy", "rich", "psycopg2-binary"]
 
 [project.urls]
-Documentation = "https://github.com/magicjedi90/etl_utilities#readme"
-Issues = "https://github.com/magicjedi90/etl_utilities/issues"
-Source = "https://github.com/magicjedi90/etl_utilities"
+Documentation = "https://github.com/ameijin/etl_utilities#readme"
+Issues = "https://github.com/ameijin/etl_utilities/issues"
+Source = "https://github.com/ameijin/etl_utilities"
 
 [tool.hatch.version]
 path = "src/etl/__about__.py"
