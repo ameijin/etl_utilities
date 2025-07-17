@@ -17,7 +17,7 @@ These utilities provide tools for connecting to various SQL databases, efficient
 
 ### 1. Connector Class
 
-The `Connector` class is used to establish connections to SQL databases including SQL Server, PostgreSQL, and MySQL.
+The `DatabaseConnector` class is used to establish connections to SQL databases including SQL Server, PostgreSQL, and MySQL.
 
 #### Usage
 
