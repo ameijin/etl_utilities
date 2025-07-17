@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "etl-utilities-ameijin"
+name = "etl-utilities-plus"
 dynamic = ["version"]
 description = 'This repository is forked from etl-utilities.'
 readme = "README.md"
