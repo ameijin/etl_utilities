@@ -22,22 +22,19 @@ The `Connector` class is used to establish connections to SQL databases includin
 #### Usage
 
 ```python
-from etl.database.connector import Connector
-
-# Create an instance of the Connector class
-connector = Connector(host='localhost', port=1433, instance='SQLEXPRESS', database='your_db', username='user', password='pass')
-
-# Trusted SQL Server connection
-trusted_connection = connector.to_trusted_msql()
-
-# User-based SQL Server connection
-user_connection = connector.to_user_msql()
-
-# PostgreSQL connection
-postgres_connection = connector.to_user_postgres()
-
-# MySQL connection
-mysql_connection = connector.to_user_mysql()
+# Context manager for automatic cleanup
+with DatabaseConnector(host="localhost", instance="SQLEXPRESS", database="mydb", 
+                      username="user", password="pass") as db:
+    
+    # MSSQL with trusted connection
+    with db.get_mssql_connection(trusted=True) as conn:
+        result = conn.execute("SELECT * FROM users")
+    
+    # PostgreSQL
+    with DatabaseConnector(host="localhost", port=5432, database="mydb", 
+                          username="user", password="pass") as pg_db:
+        with pg_db.get_postgres_connection() as conn:
+            result = conn.execute("SELECT * FROM products")
 ```
 
 ### 2. Loader Classes
