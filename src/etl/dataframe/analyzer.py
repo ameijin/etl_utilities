@@ -480,7 +480,7 @@ class DataFrameAnalyzer:
 
         # Try datetime
         try:
-            dt_series = pd.to_datetime(series, errors='coerce', infer_datetime_format=True)
+            dt_series = pd.to_datetime(series, errors='coerce')
             if not dt_series.isnull().all():
                 profile.data_type = 'datetime'
                 profile = self._calculate_datetime_stats(profile, dt_series.dropna())

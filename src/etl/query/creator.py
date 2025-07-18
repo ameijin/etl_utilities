@@ -68,8 +68,8 @@ class Creator:
             # -------------- empty column ----------------------------------------
             if column_info["is_empty"]:
                 if dialect.name == "mssql":
-                    logger.info("%s is empty – setting to nvarchar(max)", column_name)
-                    column_fragments.append(f"{escaped_column} nvarchar(max)")
+                    logger.info("%s is empty – setting to varchar(max)", column_name)
+                    column_fragments.append(f"{escaped_column} varchar(max)")
                 else:  # MariaDB – silently skip empty columns
                     logger.info("%s is empty – skipping", column_name)
                 continue
@@ -112,7 +112,7 @@ class Creator:
                     if required_length >= 4000:
                         data_definition_clause = f"{escaped_column} nvarchar(max)"
                     else:
-                        data_definition_clause = f"{escaped_column} nvarchar({required_length})"
+                        data_definition_clause = f"{escaped_column} varchar({required_length})"
                 else:
                     if required_length > dialect.maximum_varchar_length:
                         logger.info(
