@@ -9,9 +9,6 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from ..logger import Logger
 
-logger = Logger().get_logger()
-
-
 class DataQualityIssue(Enum):
     """Enumeration of data quality issues that can be detected."""
     MISSING_VALUES = "missing_values"
@@ -116,7 +113,8 @@ class DataFrameAnalyzer:
     """Comprehensive DataFrame analyzer with advanced data quality assessment."""
 
     def __init__(self, df: pd.DataFrame, sample_size: Optional[int] = None,
-                 parallel_processing: bool = True, max_workers: Optional[int] = None):
+                 parallel_processing: bool = True, max_workers: Optional[int] = None,
+                 logger: Optional[Any] = None):
         """Initialize analyzer with optional sampling for large datasets.
 
         Args:
@@ -124,6 +122,7 @@ class DataFrameAnalyzer:
             sample_size: Optional sample size for large datasets
             parallel_processing: Whether to use parallel processing
             max_workers: Maximum number of worker threads
+            logger: Optional logger instance (default: internal logger)
         """
         if df.empty:
             raise ValueError("Cannot analyze empty DataFrame")
@@ -133,10 +132,11 @@ class DataFrameAnalyzer:
         self.parallel_processing = parallel_processing
         self.max_workers = max_workers or min(32, (len(df.columns) + 3))
         self._cache = {}
+        self.logger = logger if logger is not None else Logger().get_logger()
 
-        logger.info(f"Initialized analyzer for DataFrame with {len(df)} rows and {len(df.columns)} columns")
+        self.logger.info(f"Initialized analyzer for DataFrame with {len(df)} rows and {len(df.columns)} columns")
         if sample_size:
-            logger.info(f"Using sample of {len(self.df)} rows for analysis")
+            self.logger.info(f"Using sample of {len(self.df)} rows for analysis")
 
     def _prepare_sample(self, df: pd.DataFrame, sample_size: int) -> pd.DataFrame:
         """Prepare a stratified sample for analysis."""
@@ -161,7 +161,7 @@ class DataFrameAnalyzer:
             categorical_threshold: Threshold for categorical detection
             outlier_method: Method for outlier detection ('iqr', 'zscore', 'isolation')
         """
-        logger.info("Starting comprehensive data analysis")
+        self.logger.info("Starting comprehensive data analysis")
 
         try:
             # Basic statistics
@@ -212,13 +212,13 @@ class DataFrameAnalyzer:
                 data_consistency_score=consistency_score
             )
 
-            logger.info(f"Analysis completed. Found {len(issues_found)} issues. "
+            self.logger.info(f"Analysis completed. Found {len(issues_found)} issues. "
                        f"Data consistency score: {consistency_score:.2f}")
 
             return report
 
         except Exception as e:
-            logger.error(f"Error during comprehensive analysis: {str(e)}")
+            self.logger.error(f"Error during comprehensive analysis: {str(e)}")
             raise
 
     def find_unique_columns(self) -> List[str]:
@@ -245,7 +245,7 @@ class DataFrameAnalyzer:
                         if future.result():
                             unique_columns.append(column)
                     except Exception as e:
-                        logger.warning(f"Error checking uniqueness for column {column}: {str(e)}")
+                        self.logger.warning(f"Error checking uniqueness for column {column}: {str(e)}")
         else:
             for column, series in self.df.items():
                 if self._check_column_uniqueness(column, series, total_records):
@@ -282,7 +282,7 @@ class DataFrameAnalyzer:
         # Limit combinations for performance
         combinations = list(itertools.combinations(column_list, 2))
         if len(combinations) > max_combinations:
-            logger.warning(f"Too many column combinations ({len(combinations)}), "
+            self.logger.warning(f"Too many column combinations ({len(combinations)}), "
                           f"limiting to first {max_combinations}")
             combinations = combinations[:max_combinations]
 
@@ -297,7 +297,7 @@ class DataFrameAnalyzer:
                 if len(combined.unique()) == total_records:
                     unique_column_pairs.append((first_column, second_column))
             except Exception as e:
-                logger.warning(f"Error checking pair ({first_column}, {second_column}): {str(e)}")
+                self.logger.warning(f"Error checking pair ({first_column}, {second_column}): {str(e)}")
                 continue
 
         self._cache['unique_column_pairs'] = unique_column_pairs
@@ -372,7 +372,7 @@ class DataFrameAnalyzer:
                         profile = future.result()
                         profiles.append(profile)
                     except Exception as e:
-                        logger.error(f"Error analyzing column {column}: {str(e)}")
+                        self.logger.error(f"Error analyzing column {column}: {str(e)}")
                         # Create basic profile for failed analysis
                         profiles.append(ColumnProfile(
                             column_name=str(column),
@@ -388,7 +388,7 @@ class DataFrameAnalyzer:
                     )
                     profiles.append(profile)
                 except Exception as e:
-                    logger.error(f"Error analyzing column {column}: {str(e)}")
+                    self.logger.error(f"Error analyzing column {column}: {str(e)}")
                     profiles.append(ColumnProfile(
                         column_name=str(column),
                         data_type='unknown',
@@ -519,7 +519,7 @@ class DataFrameAnalyzer:
                     profile.float_precision = 1
 
         except Exception as e:
-            logger.warning(f"Error calculating numeric stats for {profile.column_name}: {str(e)}")
+            self.logger.warning(f"Error calculating numeric stats for {profile.column_name}: {str(e)}")
 
         return profile
 
@@ -531,7 +531,7 @@ class DataFrameAnalyzer:
             profile.min_str_length = int(str_lengths.min())
             profile.avg_str_length = float(str_lengths.mean())
         except Exception as e:
-            logger.warning(f"Error calculating string stats for {profile.column_name}: {str(e)}")
+            self.logger.warning(f"Error calculating string stats for {profile.column_name}: {str(e)}")
 
         return profile
 
@@ -550,7 +550,7 @@ class DataFrameAnalyzer:
                 profile.format_inconsistencies = len(future_dates) + len(past_dates)
 
         except Exception as e:
-            logger.warning(f"Error calculating datetime stats for {profile.column_name}: {str(e)}")
+            self.logger.warning(f"Error calculating datetime stats for {profile.column_name}: {str(e)}")
 
         return profile
 
@@ -650,7 +650,7 @@ class DataFrameAnalyzer:
                 'indices': self.df[duplicate_mask].index.tolist()[:100]  # Limit for performance
             }
         except Exception as e:
-            logger.error(f"Error analyzing duplicates: {str(e)}")
+            self.logger.error(f"Error analyzing duplicates: {str(e)}")
             return {'count': 0, 'percentage': 0.0, 'indices': []}
 
     def _detect_potential_primary_keys(self) -> List[str]:
@@ -786,8 +786,28 @@ class DataFrameAnalyzer:
             return round(score, 2)
 
         except Exception as e:
-            logger.error(f"Error calculating consistency score: {str(e)}")
+            self.logger.error(f"Error calculating consistency score: {str(e)}")
             return 0.0
+
+    def log_quality_summary(self, quality_report: DataQualityReport) -> None:
+        """
+        Log a summary of the data quality analysis results.
+
+        Args:
+            quality_report: DataQualityReport containing analysis results
+        """
+        self.logger.info("Data Quality Analysis Complete:")
+        self.logger.info(f"  - Total Rows: {quality_report.total_rows:,}")
+        self.logger.info(f"  - Total Columns: {quality_report.total_columns}")
+        self.logger.info(f"  - Duplicate Rows: {quality_report.duplicate_rows} ({quality_report.duplicate_percentage:.1f}%)")
+        self.logger.info(f"  - Data Consistency Score: {quality_report.data_consistency_score}/100")
+        self.logger.info(f"  - Issues Found: {len(quality_report.issues_found)}")
+        for issue_type, description, _ in quality_report.issues_found:
+            self.logger.warning(f"  - {issue_type.value}: {description}")
+        self.logger.info(f"  - Unique Columns: {len(quality_report.unique_columns)}")
+        self.logger.info(f"  - Empty Columns: {len(quality_report.empty_columns)}")
+        self.logger.info(f"  - Categorical Columns: {len(quality_report.categorical_columns)}")
+        self.logger.info(f"  - Potential Primary Keys: {quality_report.potential_primary_keys}")
 
 
 # Backward compatibility - keep the old class name as an alias
